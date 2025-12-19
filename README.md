@@ -39,14 +39,105 @@ Scene 정보(장면 설명, 대사)와 Shot 정보(Close-up shot, Medium shot, F
 >
 ## 환경 설정
 
-(Requirements, Anaconda, Docker 등 프로젝트를 사용하는데에 필요한 요구 사항을 나열해주세요)
+프로젝트 실행을 위해 아래의 요구 사양 및 설치 단계를 확인해 주세요.
+
+### 1. 요구 사항 (Prerequisites)
+
+* **OS**: Linux (Ubuntu 권장)
+* **GPU**: NVIDIA GPU (CUDA 11.8 호환, 최소 VRAM 24GB 권장)
+* **Python**: v3.11
+* **Conda**: Anaconda 또는 Miniconda 사용 권장
+
+### 2. 설치 단계 (Installation)
+
+**Step 1: Conda 가상환경 생성 및 활성화**
+
+```bash
+conda create -n storyboard python=3.11 -y
+conda activate storyboard
+
+```
+
+**Step 2: PyTorch 및 CUDA 툴킷 설치**
+
+```bash
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+
+```
+
+**Step 3: 필수 패키지 설치**
+
+```bash
+pip install -r requirements.txt
+
+```
+
+**Step 4: Accelerate 환경 설정 (멀티 GPU 사용 시)**
+
+```bash
+accelerate config
+
+```
+
+---
 
 ## 사용 방법
 
-(프로젝트 실행 방법 (명령어 등)을 적어주세요.)
+### 1. 데이터 전처리 (Data Preprocessing)
+
+학습 전, `Data_preprocessing_method/` 폴더 내의 스크립트를 사용하여 데이터셋을 준비합니다.
+
+* **데이터 추출**: `python 00_extract_dataset.py`
+* **태그 전처리**: `python 01_preprocess_tags.py`
+
+### 2. 모델 학습 (Training)
+
+제공된 `train.sh` 스크립트를 통해 학습을 시작합니다. `accelerate`를 사용하여 멀티 GPU 환경에서 최적화된 학습을 수행합니다.
+
+```bash
+# 스크립트 실행
+bash train.sh
+
+# 직접 실행 시 예시
+python train.py \
+  --pretrained_model_name_or_path "/path/to/model" \
+  --train_data_dir "/path/to/Dataset" \
+  --resolution 512 \
+  --train_batch_size 6 \
+  --num_train_epochs 25 \
+  --mixed_precision "fp16" \
+  --output_dir "./output"
+
+```
+
+### 3. 추론 (Inference)
+
+학습된 체크포인트를 사용하여 이미지를 생성합니다.
+
+```bash
+# 스크립트 실행
+bash inference.sh
+
+# 직접 실행 시 예시
+python inference.py \
+  --base-model "/path/to/base_model" \
+  --checkpoint "/path/to/checkpoint" \
+  --trigger-word "<ms_trg>" \
+  --prompt "medium shot, Eye level, a character standing in the forest" \
+  --fuse-lora \
+  --output "result.png"
+
+```
+
+### 4. 검증 및 배치 생성 (Validation)
+
+* 배치 결과 생성: `python batch_generate.py`
+* 검증 스크립트: `bash validation.sh`
+
 
 ## 예시 결과
-Input text = " Eye level, female, youth, happy, slim body, white shirt, black pants, no background, day time "
+**Input text = " Eye level, female, youth, happy, slim body, white shirt, black pants, no background, day time "**
+
 <img width="1769" height="593" alt="image" src="https://github.com/user-attachments/assets/29988724-fc99-440b-b878-6677a67d3144" />
 
 동일 Prompt에 대해 Shot 별로 Trigger Word를 설정하여 Inference한 결과물입니다.
